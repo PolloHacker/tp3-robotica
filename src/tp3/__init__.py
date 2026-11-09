@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+import os
 import argparse
 from coppeliasim_zmqremoteapi_client import RemoteAPIClient
 
 from tp3.navigator import ReactiveNavigator
 from tp3.occupancy_grid import OccupancyGrid
 from tp3.robot import KobukiRobot
-from tp3.simulation import plot_exploration_results, run_exploration
+from tp3.simulation import (
+    get_candidate_scene_paths,
+    load_scene,
+    plot_exploration_results,
+    run_exploration,
+)
 
 __all__ = [
     "KobukiRobot",
@@ -16,6 +22,8 @@ __all__ = [
     "ReactiveNavigator",
     "run_exploration",
     "plot_exploration_results",
+    "load_scene",
+    "get_candidate_scene_paths",
     "main",
 ]
 
@@ -28,8 +36,8 @@ def main() -> None:
     parser.add_argument(
         "--scene",
         type=str,
-        default="/workspace/cenas/cena-tp3-estatico.ttt",
-        help="Path to CoppeliaSim scene file (default: /workspace/cenas/cena-tp3-estatico.ttt)",
+        default="cenas/cena-tp3-estatico.ttt",
+        help="Path to CoppeliaSim scene file (default: cenas/cena-tp3-estatico.ttt)",
     )
     parser.add_argument(
         "--duration",

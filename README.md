@@ -82,22 +82,30 @@ uv sync
 ## 4. Como Executar
 
 ### 4.1 Iniciar o CoppeliaSim
-Certifique-se de que o container do CoppeliaSim está em execução e ouvindo na porta 23000:
 
-```bash
-# A partir do diretório raiz:
-COPPELIA_DISPLAY_BACKEND=xwayland ./run-coppeliasim.sh
-```
+O projeto é compatível tanto com o **CoppeliaSim instalado nativamente no Host** quanto em **Container Docker**:
+
+- **Opção A — CoppeliaSim Nativo (Sem Container):**
+  Basta iniciar o CoppeliaSim normalmente na sua máquina (ele abrirá a Remote API ZMQ por padrão na porta `23000`).
+
+- **Opção B — CoppeliaSim via Container Docker:**
+  Certifique-se de que o container do CoppeliaSim está em execução ouvindo na porta `23000` e mapeando o repositório para `/workspace`:
+  ```bash
+  # Exemplo de execução via container (com aceleração de display/GPU):
+  COPPELIA_DISPLAY_BACKEND=xwayland ./run-coppeliasim.sh
+  # ou via docker run direto montando o workspace:
+  # docker run --net=host -v "$(pwd):/workspace" ...
+  ```
 
 ### 4.2 Executar o Script CLI
-O projeto expõe um comando executável diretamente registrado em `pyproject.toml`:
+O projeto expõe um comando executável diretamente registrado em `pyproject.toml`. O carregador de cenas detecta automaticamente se a execução é no Host ou no Container:
 
 ```bash
 # Execução padrão (Cenário estático, 45 segundos, célula de 0.10m):
 uv run tp3
 
 # Ou especificando argumentos customizados:
-uv run tp3 --scene /workspace/cenas/cena-tp3-estatico.ttt --duration 60 --cell-size 0.10 --output results/demo.png
+uv run tp3 --scene cenas/cena-tp3-estatico.ttt --duration 60 --cell-size 0.10 --output results/demo.png
 ```
 
 ### 4.3 Executar o Jupyter Notebook

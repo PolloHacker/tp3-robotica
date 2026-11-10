@@ -18,7 +18,7 @@ class ReactiveNavigator:
         turn_angular_velocity: float = 1.0,
         front_obstacle_threshold: float = 0.70,
         side_obstacle_threshold: float = 0.50,
-        stuck_check_interval: int = 40,
+        stuck_check_interval: int = 20,
         stuck_distance_threshold: float = 0.08,
     ) -> None:
         """Initialize navigation parameters and state.

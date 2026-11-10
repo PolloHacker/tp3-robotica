@@ -11,7 +11,7 @@ import numpy as np
 from tp3.navigator import ReactiveNavigator
 from tp3.occupancy_grid import OccupancyGrid
 from tp3.robot import KobukiRobot
-from tp3.simulation import plot_exploration_results
+from tp3.simulation import load_scene, plot_exploration_results
 
 
 def run_multi_resolution_experiment(
@@ -29,7 +29,7 @@ def run_multi_resolution_experiment(
         results_dir: Output directory.
     """
     print("=== Running Experiment 1: Cell Size Evaluation (0.01m, 0.10m, 0.50m) ===")
-    sim.loadScene(scene_path)
+    load_scene(sim, scene_path)
     time.sleep(0.5)
 
     robot = KobukiRobot(sim=sim, distance_noise_std=0.02, angle_noise_std=0.005)
@@ -127,7 +127,7 @@ def run_single_experiment(
         results_dir: Output directory.
     """
     print(f"=== Running: {title_label} ===")
-    sim.loadScene(scene_path)
+    load_scene(sim, scene_path)
     time.sleep(0.5)
 
     robot = KobukiRobot(sim=sim, distance_noise_std=0.02, angle_noise_std=0.005)
@@ -209,7 +209,7 @@ def run_noise_comparison_experiment(
     grids: list[OccupancyGrid] = []
 
     for label, d_noise, a_noise in noise_levels:
-        sim.loadScene(scene_path)
+        load_scene(sim, scene_path)
         time.sleep(0.5)
 
         robot = KobukiRobot(
@@ -257,8 +257,8 @@ def main() -> None:
     client = RemoteAPIClient()
     sim = client.require("sim")
 
-    static_scene = "/workspace/cenas/cena-tp3-estatico.ttt"
-    dynamic_scene = "/workspace/cenas/cena-tp3-dinamico.ttt"
+    static_scene = "cenas/cena-tp3-estatico.ttt"
+    dynamic_scene = "cenas/cena-tp3-dinamico.ttt"
 
     run_multi_resolution_experiment(sim, static_scene, duration_seconds=50.0)
 

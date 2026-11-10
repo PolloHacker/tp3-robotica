@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 from typing import Any
 
@@ -13,9 +14,99 @@ from tp3.occupancy_grid import OccupancyGrid
 from tp3.robot import KobukiRobot
 
 
+def get_candidate_scene_paths(scene_path: str) -> list[str]:
+    """Generate ordered list of candidate scene paths for both host and container environments."""
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.dirname(os.path.dirname(this_dir))
+
+    norm_scene = os.path.normpath(scene_path)
+    if norm_scene.startswith("/workspace/"):
+        rel_path = norm_scene[len("/workspace/"):]
+    elif os.path.isabs(norm_scene):
+        try:
+            rel_path = os.path.relpath(norm_scene, repo_root)
+        except ValueError:
+            rel_path = os.path.basename(norm_scene)
+    else:
+        rel_path = norm_scene
+
+    host_abs_provided = os.path.abspath(scene_path)
+    host_abs_repo = os.path.abspath(os.path.join(repo_root, rel_path))
+
+    container_workspace = os.environ.get("COPPELIA_WORKSPACE", "/workspace")
+    container_abs = os.path.normpath(os.path.join(container_workspace, rel_path))
+
+    candidates: list[str] = []
+
+    # 1. Existing local file on host (prioritized for normal local CoppeliaSim)
+    for p in [host_abs_repo, host_abs_provided]:
+        if os.path.isfile(p) and p not in candidates:
+            candidates.append(p)
+
+    # 2. Container workspace path (prioritized for Docker container CoppeliaSim)
+    if container_abs not in candidates:
+        candidates.append(container_abs)
+
+    # 3. Path as provided by caller
+    if scene_path not in candidates:
+        candidates.append(scene_path)
+
+    # 4. Provided path made absolute
+    if host_abs_provided not in candidates:
+        candidates.append(host_abs_provided)
+
+    return candidates
+
+
+def load_scene(sim: Any, scene_path: str = "cenas/cena-tp3-estatico.ttt") -> None:
+    """Load a CoppeliaSim scene, resolving paths for both host and container environments.
+
+    Args:
+        sim: CoppeliaSim Remote API sim object.
+        scene_path: Path to the CoppeliaSim .ttt scene file.
+    """
+    candidates = get_candidate_scene_paths(scene_path)
+    last_err: Exception | None = None
+
+    for path in candidates:
+        try:
+            print(f"Loading scene in CoppeliaSim: {path}")
+            sim.loadScene(path)
+            time.sleep(0.5)
+            print(f"Successfully loaded scene: {path}")
+            return
+        except Exception as err:
+            last_err = err
+            continue
+
+    # Fallback: Check if the scene is already open in CoppeliaSim GUI
+    try:
+        sim.getObject("/kobuki")
+        print(
+            f"Notice: Could not load scene from candidate paths {candidates}, "
+            "but Kobuki robot model is already loaded in CoppeliaSim. "
+            "Continuing with the active scene."
+        )
+        return
+    except Exception:
+        pass
+
+    raise RuntimeError(
+        f"Failed to load scene '{scene_path}' in CoppeliaSim.\n"
+        f"Attempted paths:\n"
+        + "\n".join(f"  - {c}" for c in candidates)
+        + f"\nUnderlying error from CoppeliaSim: {last_err}\n\n"
+        "Remedy:\n"
+        "  - On host: Verify the scene file exists at the indicated location.\n"
+        "  - In Docker: Ensure your workspace is mounted (e.g., -v $(pwd):/workspace) "
+        "or set COPPELIA_WORKSPACE to the container mount path.\n"
+        "  - Alternatively: Open the .ttt scene file directly in CoppeliaSim GUI before running."
+    ) from last_err
+
+
 def run_exploration(
     sim: Any,
-    scene_path: str = "/workspace/cenas/cena-tp3-estatico.ttt",
+    scene_path: str = "cenas/cena-tp3-estatico.ttt",
     initial_pose: tuple[float, float, float] | None = None,
     duration_seconds: float = 60.0,
     cell_size: float = 0.10,
@@ -38,7 +129,8 @@ def run_exploration(
     Returns:
         Tuple of (occupancy_grid, trajectory, hit_points_x, hit_points_y).
     """
-    sim.loadScene(scene_path)
+
+    load_scene(sim, scene_path)
     time.sleep(0.5)
 
     robot = KobukiRobot(

@@ -1,11 +1,5 @@
 # Trabalho Prático 3 — Exploração e Mapeamento com Occupancy Grid
 
-**Disciplina:** Robótica Móvel — 2º Semestre de 2026  
-**Professor:** Prof. Douglas G. Macharet — DCC / UFMG  
-**Aluno:** Isaac Reyes  
-**Matrícula:** 2022069843  
-**Email:** isaac.reyalves@gmail.com  
-
 ---
 
 ## 1. Visão Geral
